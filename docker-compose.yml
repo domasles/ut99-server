@@ -1,0 +1,43 @@
+services:
+  ut99:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        - TARGET_DIR=/opt/ut99
+        - USER=server
+        - UID=1000
+        - GID=1000
+
+    image: ut99-server:latest
+    ports:
+      - "7777-7781:7777-7781/udp"
+      - "8777:8777/udp"
+      - "8080:8080/tcp"
+
+    volumes:
+      - ./config:/config:ro,Z
+      - ./mods:/mods:ro,Z
+      - ut99-state:/var/lib/ut99
+
+    environment:
+      - UT_SERVER_URL=DM-Deck16][?game=BotPack.DeathMatchPlus
+      - UT_SERVER_NAME=The Sickest UT99 Server
+      - UT_MOTD=Welcome to UT99!
+      - UT_ADMIN_NAME=Admin
+      - UT_ADMIN_EMAIL=admin@example.com
+      - UT_ADMIN_PASSWORD=secretadmin
+      - UT_GAME_PASSWORD=
+      - UT_WEB_USER=admin
+      - UT_WEB_PASS=secretwebadmin
+      - UT_MAX_PLAYERS=16
+      - UT_UPLINK=False
+      - UT_LAN_BEACON=True
+      - UT_WEB_ENABLED=True
+      - UT_SERVER_PACKAGES=
+      - UT_MODS=
+
+    restart: "on-failure:3"
+
+volumes:
+  ut99-state:
