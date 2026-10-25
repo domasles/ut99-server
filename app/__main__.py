@@ -1,18 +1,14 @@
+import subprocess
+import signal
+import time
 import sys
 import os
-
-from pathlib import Path
 
 from app.config import ConfigError, ensure_template, load
 from app.ini import IniError, render, write
 
 
 class LaunchError(Exception):
-    pass
-
-
-def apply_mods():
-    # TODO: run RedeeMOD CLI for potential mods
     pass
 
 
@@ -23,16 +19,43 @@ def launch(config):
     except OSError as exc:
         raise LaunchError(str(exc)) from exc
 
-    command = ["./ucc-bin", "server", config["UT_SERVER_URL"]]
-    os.execvp(command[0], command)
+    redeemod_cli = os.environ.get("REDEEMOD_CLI", "/opt/ut99/redeemod/redeemod-cli")
+    command = [redeemod_cli, "launch", "ut99"]
+
+    mods = config.get("UT_MODS") or []
+
+    if mods:
+        command.extend(str(config["mods_dir"] / mod) for mod in mods)
+
+    command.extend(["--flags", f"server {config['UT_SERVER_URL']}"])
+    process = subprocess.Popen(command, cwd=".", start_new_session=True)
+
+    def _shutdown(signum, frame):
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+
+        except OSError:
+            pass
+
+        raise SystemExit(0)
+
+    signal.signal(signal.SIGTERM, _shutdown)
+    signal.signal(signal.SIGINT, _shutdown)
+
+    while True:
+        try:
+            os.killpg(process.pid, 0)
+
+        except ProcessLookupError:
+            break
+
+        time.sleep(1)
 
 
 def main():
     try:
         config = load()
         template_path = ensure_template(config)
-
-        apply_mods()
 
         template = template_path.read_text(encoding="utf-8", errors="surrogateescape")
 

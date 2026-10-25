@@ -9,6 +9,8 @@ UT_STATE_DIR="${UT_STATE_DIR:-/var/lib/ut99}"
 UT_CONFIG_DIR="${UT_CONFIG_DIR:-/config}"
 UT_MODS_DIR="${UT_MODS_DIR:-/mods}"
 
+REDEEMOD_CLI="${REDEEMOD_CLI:-/opt/ut99/redeemod/redeemod-cli}"
+
 cd "$UT_HOME"
 
 if [ "$(id -u)" -eq 0 ]; then
