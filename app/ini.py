@@ -44,7 +44,7 @@ MAPPINGS = {
         "section": "UTServerAdmin.UTServerAdmin",
         "key": "AdminUsername"
     },
-    "UT_WEB_PASS": {
+    "UT_WEB_PASSWORD": {
         "section": "UTServerAdmin.UTServerAdmin",
         "key": "AdminPassword",
     },
@@ -180,6 +180,43 @@ def remove_list(lines: list[str], section: str, key: str, prefix: str) -> None:
         del lines[i]
 
 
+def _clear_section_keys(lines: list[str], section: str, key: str) -> None:
+    matches = _bounds(lines).get(section.lower(), [])
+
+    if not matches:
+        return
+
+    if len(matches) > 1:
+        raise IniError(f"Section [{section}] appears more than once")
+
+    start, end = matches[0]
+    drop = [i for i in range(start + 1, end) if _key(lines[i], key)]
+
+    for i in reversed(drop):
+        del lines[i]
+
+
+def _clear_section_series(lines: list[str], section: str, base: str) -> None:
+    matches = _bounds(lines).get(section.lower(), [])
+
+    if not matches:
+        return
+
+    if len(matches) > 1:
+        raise IniError(f"Section [{section}] appears more than once")
+
+    start, end = matches[0]
+
+    drop = [
+        i
+        for i in range(start + 1, end)
+        if lines[i].split("=", 1)[0].strip().startswith(base)
+    ]
+
+    for i in reversed(drop):
+        del lines[i]
+
+
 def render(template: str, config: dict[str, Any]) -> list[str]:
     lines = template.replace("\r\n", "\n").replace("\r", "\n").split("\n")
 
@@ -190,26 +227,35 @@ def render(template: str, config: dict[str, Any]) -> list[str]:
         key = spec["key"]
 
         if kind == "set":
-            if value is not None:
-                set_key(lines, section, key, str(value))
+            set_key(lines, section, key, "" if value is None else str(value))
 
         elif kind == "list":
-            for item in value or []:
-                add_list(lines, section, key, item)
+            if value:
+                for item in value:
+                    add_list(lines, section, key, item)
+
+            else:
+                _clear_section_keys(lines, section, key)
 
         elif kind == "series":
-            for index, item in enumerate(value or [], 1):
-                set_key(lines, section, f"{key}{index}", item)
+            if value:
+                for index, item in enumerate(value, 1):
+                    set_key(lines, section, f"{key}{index}", item)
+
+            else:
+                _clear_section_series(lines, section, key)
 
         elif kind == "toggle":
-            if value is False:
+            if value is True:
                 remove_list(lines, section, key, spec["prefix"])
 
-            elif value is True:
-                remove_list(lines, section, key, spec["prefix"])
+                values = spec["values"] if "values" in spec else [spec["value"]]
 
-                for v in spec.get("values", [spec["value"]]):
+                for v in values:
                     add_list(lines, section, key, v)
+
+            else:
+                remove_list(lines, section, key, spec["prefix"])
 
     return lines
 
@@ -222,20 +268,13 @@ def write(path: Path, lines: list[str]) -> None:
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    if (
-        path.is_file()
-        and path.read_text(encoding="utf-8", errors="surrogateescape") == text
-    ):
+    if (path.is_file() and path.read_text(encoding="utf-8", errors="surrogateescape") == text):  # fmt: skip
         return
 
-    descriptor, temporary = tempfile.mkstemp(
-        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
-    )
+    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")  # fmt: skip
 
     try:
-        with os.fdopen(
-            descriptor, "w", encoding="utf-8", errors="surrogateescape", newline=""
-        ) as handle:
+        with os.fdopen(descriptor, "w", encoding="utf-8", errors="surrogateescape", newline="") as handle:  # fmt: skip
             handle.write(text)
 
         os.chmod(temporary, 0o600)
