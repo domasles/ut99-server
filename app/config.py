@@ -1,8 +1,10 @@
 import os
 
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
-FIELDS = {
+FIELDS: dict[str, dict[str, Any]] = {
     "UT_SERVER_URL": {"type": str, "required": True},
     "UT_SERVER_NAME": {"type": str, "required": True},
     "UT_MOTD": {"type": list, "separator": "\n", "limit": 4, "multiline": True},
@@ -25,7 +27,7 @@ class ConfigError(Exception):
     pass
 
 
-def _parse(name, spec, raw):
+def _parse(name: str, spec: dict[str, Any], raw: str) -> Any:
     kind = spec["type"]
     value = raw if spec.get("strip", True) is False else raw.strip()
 
@@ -50,17 +52,22 @@ def _parse(name, spec, raw):
 
     if kind is int:
         if not (value.isascii() and value.isdigit()):
-            raise ConfigError(f"{name} must be an integer between {spec['min']} and {spec['max']}")
+            raise ConfigError(f"{name} must be an integer between {spec['min']} and {spec['max']}")  # fmt: skip
 
         number = int(value)
 
         if not spec["min"] <= number <= spec["max"]:
-            raise ConfigError(f"{name} must be an integer between {spec['min']} and {spec['max']}")
+            raise ConfigError(f"{name} must be an integer between {spec['min']} and {spec['max']}")  # fmt: skip
 
         return number
 
     if kind is list:
-        items = [item.strip() for item in value.split(spec.get("separator", ",")) if item.strip()]
+        items = [
+            item.strip()
+            for item in value.split(spec.get("separator", ","))
+            if item.strip()
+        ]
+
         return items[: spec["limit"]] if "limit" in spec else items
 
     if kind is str:
@@ -69,11 +76,14 @@ def _parse(name, spec, raw):
     raise ConfigError(f"{name} has an unsupported type")
 
 
-def _read(environ):
-    return {name: _parse(name, spec, environ.get(name, "")) for name, spec in FIELDS.items()}
+def _read(environ: Mapping[str, str]) -> dict[str, Any]:
+    return {
+        name: _parse(name, spec, environ.get(name, ""))
+        for name, spec in FIELDS.items()
+    }  # fmt: skip
 
 
-def load():
+def load() -> dict[str, Any]:
     home = Path(os.environ.get("UT_HOME", "/opt/ut99"))
 
     system_dir = home / "System"
@@ -107,7 +117,7 @@ def load():
     return config
 
 
-def ensure_template(config):
+def ensure_template(config: dict[str, Any]) -> Path:
     if config["template"].is_file():
         return config["template"]
 

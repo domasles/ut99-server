@@ -2,6 +2,10 @@ import tempfile
 import os
 import re
 
+from pathlib import Path
+from typing import Any
+
+
 class IniError(Exception):
     pass
 
@@ -9,16 +13,45 @@ class IniError(Exception):
 SECTION = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 
 
+# fmt: off
 MAPPINGS = {
-    "UT_SERVER_NAME": {"section": "Engine.GameReplicationInfo", "key": "ServerName"},
-    "UT_MOTD": {"section": "Engine.GameReplicationInfo", "key": "MOTDLine", "kind": "series"},
-    "UT_ADMIN_NAME": {"section": "Engine.GameReplicationInfo", "key": "AdminName"},
-    "UT_ADMIN_EMAIL": {"section": "Engine.GameReplicationInfo", "key": "AdminEmail"},
-    "UT_ADMIN_PASSWORD": {"section": "Engine.GameInfo", "key": "AdminPassword"},
-    "UT_GAME_PASSWORD": {"section": "Engine.GameInfo", "key": "GamePassword"},
-    "UT_WEB_USER": {"section": "UTServerAdmin.UTServerAdmin", "key": "AdminUsername"},
-    "UT_WEB_PASS": {"section": "UTServerAdmin.UTServerAdmin", "key": "AdminPassword"},
-    "UT_MAX_PLAYERS": {"section": "Engine.GameInfo", "key": "MaxPlayers"},
+    "UT_SERVER_NAME": {
+        "section": "Engine.GameReplicationInfo",
+        "key": "ServerName",
+    },
+    "UT_MOTD": {
+        "section": "Engine.GameReplicationInfo",
+        "key": "MOTDLine",
+        "kind": "series",
+    },
+    "UT_ADMIN_NAME": {
+        "section": "Engine.GameReplicationInfo",
+        "key": "AdminName",
+    },
+    "UT_ADMIN_EMAIL": {
+        "section": "Engine.GameReplicationInfo",
+        "key": "AdminEmail",
+    },
+    "UT_ADMIN_PASSWORD": {
+        "section": "Engine.GameInfo",
+        "key": "AdminPassword",
+    },
+    "UT_GAME_PASSWORD": {
+        "section": "Engine.GameInfo",
+        "key": "GamePassword",
+    },
+    "UT_WEB_USER": {
+        "section": "UTServerAdmin.UTServerAdmin",
+        "key": "AdminUsername"
+    },
+    "UT_WEB_PASS": {
+        "section": "UTServerAdmin.UTServerAdmin",
+        "key": "AdminPassword",
+    },
+    "UT_MAX_PLAYERS": {
+        "section": "Engine.GameInfo",
+        "key": "MaxPlayers",
+    },
     "UT_UPLINK": {
         "section": "Engine.GameEngine",
         "key": "ServerActors",
@@ -36,13 +69,24 @@ MAPPINGS = {
             "IpServer.UdpServerUplink MasterServerAddress=master.hypercoop.tk MasterServerPort=27900",
         ],
     },
-    "UT_LAN_ENABLED": {"section": "IpDrv.UdpBeacon", "key": "DoBeacon"},
-    "UT_WEB_ENABLED": {"section": "UWeb.WebServer", "key": "bEnabled"},
-    "UT_SERVER_PACKAGES": {"section": "Engine.GameEngine", "key": "ServerPackages", "kind": "list"},
+    "UT_LAN_ENABLED": {
+        "section": "IpDrv.UdpBeacon",
+        "key": "DoBeacon",
+    },
+    "UT_WEB_ENABLED": {
+        "section": "UWeb.WebServer",
+        "key": "bEnabled",
+    },
+    "UT_SERVER_PACKAGES": {
+        "section": "Engine.GameEngine",
+        "key": "ServerPackages",
+        "kind": "list",
+    },
 }
+# fmt: on
 
 
-def _bounds(lines):
+def _bounds(lines: list[str]) -> dict[str, list[tuple[int, int]]]:
     headers = []
 
     for index, line in enumerate(lines):
@@ -60,7 +104,7 @@ def _bounds(lines):
     return result
 
 
-def _section(lines, name, create=False):
+def _section(lines: list[str], name: str, create: bool = False) -> tuple[int, int]:
     matches = _bounds(lines).get(name.lower(), [])
 
     if not matches:
@@ -76,15 +120,15 @@ def _section(lines, name, create=False):
     return matches[0]
 
 
-def _key(line, key):
+def _key(line: str, key: str) -> re.Match[str] | None:
     return re.match(rf"\s*{re.escape(key)}\s*=", line, re.IGNORECASE)
 
 
-def _value(line):
+def _value(line: str) -> str:
     return line.split("=", 1)[1].strip()
 
 
-def set_key(lines, section, key, value):
+def set_key(lines: list[str], section: str, key: str, value: str) -> None:
     start, end = _section(lines, section, create=True)
     found = [i for i in range(start + 1, end) if _key(lines[i], key)]
 
@@ -106,7 +150,7 @@ def set_key(lines, section, key, value):
     lines.insert(insert_at, line)
 
 
-def add_list(lines, section, key, value):
+def add_list(lines: list[str], section: str, key: str, value: str) -> None:
     start, end = _section(lines, section, create=True)
     found = [i for i in range(start + 1, end) if _key(lines[i], key)]
 
@@ -116,7 +160,7 @@ def add_list(lines, section, key, value):
     lines.insert(found[-1] + 1 if found else start + 1, f"{key}={value}")
 
 
-def remove_list(lines, section, key, prefix):
+def remove_list(lines: list[str], section: str, key: str, prefix: str) -> None:
     matches = _bounds(lines).get(section.lower(), [])
 
     if not matches:
@@ -126,13 +170,17 @@ def remove_list(lines, section, key, prefix):
         raise IniError(f"Section [{section}] appears more than once")
 
     start, end = matches[0]
-    drop = [i for i in range(start + 1, end) if _key(lines[i], key) and _value(lines[i]).lower().startswith(prefix.lower())]
+    drop = [
+        i
+        for i in range(start + 1, end)
+        if _key(lines[i], key) and _value(lines[i]).lower().startswith(prefix.lower())
+    ]
 
     for i in reversed(drop):
         del lines[i]
 
 
-def render(template, config):
+def render(template: str, config: dict[str, Any]) -> list[str]:
     lines = template.replace("\r\n", "\n").replace("\r", "\n").split("\n")
 
     for env_name, spec in MAPPINGS.items():
@@ -166,7 +214,7 @@ def render(template, config):
     return lines
 
 
-def write(path, lines):
+def write(path: Path, lines: list[str]) -> None:
     text = "\n".join(lines)
 
     if text and not text.endswith("\n"):
@@ -174,13 +222,20 @@ def write(path, lines):
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    if path.is_file() and path.read_text(encoding="utf-8", errors="surrogateescape") == text:
+    if (
+        path.is_file()
+        and path.read_text(encoding="utf-8", errors="surrogateescape") == text
+    ):
         return
 
-    descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    descriptor, temporary = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
+    )
 
     try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", errors="surrogateescape", newline="") as handle:
+        with os.fdopen(
+            descriptor, "w", encoding="utf-8", errors="surrogateescape", newline=""
+        ) as handle:
             handle.write(text)
 
         os.chmod(temporary, 0o600)

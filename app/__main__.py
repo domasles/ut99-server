@@ -4,6 +4,9 @@ import time
 import sys
 import os
 
+from types import FrameType
+from typing import Any
+
 from app.config import ConfigError, ensure_template, load
 from app.ini import IniError, render, write
 
@@ -12,7 +15,7 @@ class LaunchError(Exception):
     pass
 
 
-def launch(config):
+def launch(config: dict[str, Any]) -> None:
     try:
         os.chdir(config["system_dir"])
 
@@ -30,7 +33,7 @@ def launch(config):
     command.extend(["--flags", f"server {config['UT_SERVER_URL']}"])
     process = subprocess.Popen(command, cwd=".", start_new_session=True)
 
-    def _shutdown(signum, frame):
+    def _shutdown(signum: int, frame: FrameType | None) -> None:
         try:
             os.killpg(process.pid, signal.SIGTERM)
 
@@ -52,7 +55,7 @@ def launch(config):
         time.sleep(1)
 
 
-def main():
+def main() -> int:
     try:
         config = load()
         template_path = ensure_template(config)
