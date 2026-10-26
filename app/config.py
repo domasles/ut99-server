@@ -14,7 +14,7 @@ FIELDS = {
     "UT_WEB_PASS": {"type": str, "strip": False},
     "UT_MAX_PLAYERS": {"type": int, "min": 1, "max": 128},
     "UT_UPLINK": {"type": bool},
-    "UT_LAN_BEACON": {"type": bool},
+    "UT_LAN_ENABLED": {"type": bool},
     "UT_WEB_ENABLED": {"type": bool, "default": False},
     "UT_SERVER_PACKAGES": {"type": list},
     "UT_MODS": {"type": list},
@@ -91,26 +91,6 @@ def load():
     if not maps_dir.is_dir():
         raise ConfigError(f"Maps directory not found: {maps_dir}")
 
-    map_name = config["UT_SERVER_URL"].split("?", 1)[0]
-
-    if config["UT_SERVER_URL"].startswith("-") or not map_name:
-        raise ConfigError("UT_SERVER_URL must start with a map name")
-
-    if "/" in map_name or "\\" in map_name or map_name in (".", ".."):
-        raise ConfigError(f"Invalid map name: {map_name}")
-
-    found = {path.stem.lower() for path in maps_dir.iterdir() if path.is_file()}
-
-    if map_name.lower() not in found:
-        raise ConfigError(f"Map not found in {maps_dir}: {map_name}")
-
-    for mod in config.get("UT_MODS") or []:
-        if "/" in mod or "\\" in mod or mod in (".", ".."):
-            raise ConfigError(f"Invalid mod directory: {mod}")
-
-        if not (mods_dir / mod).is_dir():
-            raise ConfigError(f"Mod directory not found: {mods_dir / mod}")
-
     config.update(
         {
             "home": home,
@@ -120,7 +100,6 @@ def load():
             "mods_dir": mods_dir,
             "template": config_dir / "UnrealTournament.ini.template",
             "state_template": state_dir / "UnrealTournament.ini.template",
-            "fresh_ini": system_dir / "UnrealTournament.ini",
             "ini": system_dir / "UnrealTournament.ini",
         }
     )
@@ -137,7 +116,7 @@ def ensure_template(config):
     if fallback.is_file():
         return fallback
 
-    source = config["fresh_ini"]
+    source = config["ini"]
 
     if not source.is_file():
         raise ConfigError(f"Fresh install INI not found: {source}")

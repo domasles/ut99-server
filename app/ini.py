@@ -11,17 +11,14 @@ SECTION = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 
 MAPPINGS = {
     "UT_SERVER_NAME": {"section": "Engine.GameReplicationInfo", "key": "ServerName"},
+    "UT_MOTD": {"section": "Engine.GameReplicationInfo", "key": "MOTDLine", "kind": "series"},
     "UT_ADMIN_NAME": {"section": "Engine.GameReplicationInfo", "key": "AdminName"},
     "UT_ADMIN_EMAIL": {"section": "Engine.GameReplicationInfo", "key": "AdminEmail"},
-    "UT_MOTD": {"section": "Engine.GameReplicationInfo", "key": "MOTDLine", "kind": "series"},
     "UT_ADMIN_PASSWORD": {"section": "Engine.GameInfo", "key": "AdminPassword"},
     "UT_GAME_PASSWORD": {"section": "Engine.GameInfo", "key": "GamePassword"},
-    "UT_MAX_PLAYERS": {"section": "Engine.GameInfo", "key": "MaxPlayers"},
-    "UT_WEB_ENABLED": {"section": "UWeb.WebServer", "key": "bEnabled"},
     "UT_WEB_USER": {"section": "UTServerAdmin.UTServerAdmin", "key": "AdminUsername"},
     "UT_WEB_PASS": {"section": "UTServerAdmin.UTServerAdmin", "key": "AdminPassword"},
-    "UT_LAN_BEACON": {"section": "IpDrv.UdpBeacon", "key": "DoBeacon"},
-    "UT_SERVER_PACKAGES": {"section": "Engine.GameEngine", "key": "ServerPackages", "kind": "list"},
+    "UT_MAX_PLAYERS": {"section": "Engine.GameInfo", "key": "MaxPlayers"},
     "UT_UPLINK": {
         "section": "Engine.GameEngine",
         "key": "ServerActors",
@@ -39,6 +36,9 @@ MAPPINGS = {
             "IpServer.UdpServerUplink MasterServerAddress=master.hypercoop.tk MasterServerPort=27900",
         ],
     },
+    "UT_LAN_ENABLED": {"section": "IpDrv.UdpBeacon", "key": "DoBeacon"},
+    "UT_WEB_ENABLED": {"section": "UWeb.WebServer", "key": "bEnabled"},
+    "UT_SERVER_PACKAGES": {"section": "Engine.GameEngine", "key": "ServerPackages", "kind": "list"},
 }
 
 

@@ -28,12 +28,12 @@ services:
       - UT_ADMIN_EMAIL=admin@example.com
       - UT_ADMIN_PASSWORD=secretadmin
       - UT_GAME_PASSWORD=
-      - UT_WEB_USER=admin
-      - UT_WEB_PASS=secretwebadmin
+      - UT_WEB_USER=
+      - UT_WEB_PASS=
       - UT_MAX_PLAYERS=16
       - UT_UPLINK=False
-      - UT_LAN_BEACON=True
-      - UT_WEB_ENABLED=True
+      - UT_LAN_ENABLED=True
+      - UT_WEB_ENABLED=False
       - UT_SERVER_PACKAGES=
       - UT_MODS=
 
