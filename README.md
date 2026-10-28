@@ -35,9 +35,9 @@ Server setup can be controlled using 2 methods.
 
 | Environment variable | Description | Required? |
 |:---|:---|:---:|
-| **UT_SERVER_URL** | Startup level and gamemode | ✅ |
-| **UT_SERVER_NAME** | Name of the server (can be up to 4 lines, separated with `\n`) | ✅ |
-| **UT_MOTD** | Message of the day | ❌ |
+| **UT_SERVER_URL** | Startup level, gamemode and more | ✅ |
+| **UT_SERVER_NAME** | Name of the server | ✅ |
+| **UT_MOTD** | Message of the day (can be up to 4 lines, separated with `\n`) | ❌ |
 | **UT_ADMIN_NAME** | Administrator name (cosmetic) | ❌ |
 | **UT_ADMIN_EMAIL** | Administrator email (cosmetic) | ❌ |
 | **UT_ADMIN_PASSWORD** | Administrator password (used to log in as an admin) | ❌ |
@@ -47,7 +47,7 @@ Server setup can be controlled using 2 methods.
 | **UT_MAX_PLAYERS** | Maximum amount of players | ❌ |
 | **UT_UPLINK** | Allows the server to be exposed on public mirrors/lists | ❌ |
 | **UT_LAN_ENABLED** | Allows the server to be exposed on LAN | ❌ |
-| **UT_WEB_ENABLED** | Enables/disabled web admin panel | ❌ |
+| **UT_WEB_ENABLED** | Enables/disables web admin panel | ❌ |
 | **UT_SERVER_PACKAGES** | If a mod has any *.u files, their names without extension must be specified here | ❌ |
 | **UT_MODS** | Mod folder names within `mods/` directory | ❌ |
 
